@@ -1,10 +1,8 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
-
 // Mảng lưu trữ dữ liệu User tạm thời (In-memory)
 let users = [];
-
 // ==========================================
 // 1. CREATE - Tạo người dùng mới
 // ==========================================
@@ -36,14 +34,12 @@ app.post('/users', (req, res) => {
   users.push(newUser);
   res.status(201).json({ message: 'User created successfully', user: newUser });
 });
-
 // ==========================================
 // 2. READ ALL - Lấy danh sách tất cả người dùng
 // ==========================================
 app.get('/users', (req, res) => {
   res.json(users);
 });
-
 // ==========================================
 // 3. READ ONE - Lấy thông tin chi tiết một người dùng theo ID
 // ==========================================
@@ -57,7 +53,6 @@ app.get('/users/:id', (req, res) => {
     res.status(404).json({ message: 'User not found' });
   }
 });
-
 // ==========================================
 // 4. UPDATE - Cập nhật thông tin người dùng theo ID
 // ==========================================
@@ -89,7 +84,6 @@ app.put('/users/:id', (req, res) => {
     res.status(404).json({ message: 'User not found' });
   }
 });
-
 // ==========================================
 // 5. DELETE - Xóa người dùng theo ID
 // ==========================================
