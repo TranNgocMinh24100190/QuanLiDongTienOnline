@@ -60,5 +60,4 @@ async function deleteData(url){
     });
 
     return await res.json();
-
 }
