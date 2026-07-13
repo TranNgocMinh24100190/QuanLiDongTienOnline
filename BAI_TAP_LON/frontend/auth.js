@@ -1,22 +1,18 @@
-const API = "http://localhost:3000/api";
+const API = "http://localhost:3000/api/auth/login";
 
-async function login() {
+const form = document.getElementById("loginForm");
+
+form.addEventListener("submit", async function (e) {
+
+    e.preventDefault();
 
     const email = document.getElementById("email").value;
 
     const password = document.getElementById("password").value;
 
-    if (email == "" || password == "") {
-
-        alert("Vui lòng nhập đầy đủ thông tin");
-
-        return;
-
-    }
-
     try {
 
-        const res = await fetch(API + "/auth/login", {
+        const response = await fetch(API, {
 
             method: "POST",
 
@@ -36,15 +32,15 @@ async function login() {
 
         });
 
-        const data = await res.json();
+        const data = await response.json();
 
-        if (res.ok) {
-
-            localStorage.setItem("token", data.token);
+        if (response.ok) {
 
             alert("Đăng nhập thành công");
 
-            window.location = "dashboard.html";
+            localStorage.setItem("token", data.token);
+
+            window.location.href = "dashboard.html";
 
         } else {
 
@@ -54,88 +50,10 @@ async function login() {
 
     } catch (err) {
 
-        alert("Không thể kết nối tới Server");
+        alert("Không kết nối được tới server");
+
+        console.log(err);
 
     }
 
-}
-
-async function register() {
-
-    const fullname = document.getElementById("fullname").value;
-
-    const email = document.getElementById("email").value;
-
-    const password = document.getElementById("password").value;
-
-    const confirm = document.getElementById("confirm").value;
-
-    if (fullname == "" || email == "" || password == "" || confirm == "") {
-
-        alert("Không được để trống");
-
-        return;
-
-    }
-
-    if (password != confirm) {
-
-        alert("Mật khẩu không khớp");
-
-        return;
-
-    }
-
-    try {
-
-        const res = await fetch(API + "/auth/register", {
-
-            method: "POST",
-
-            headers: {
-
-                "Content-Type": "application/json"
-
-            },
-
-            body: JSON.stringify({
-
-                fullname,
-
-                email,
-
-                password
-
-            })
-
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-
-            alert("Đăng ký thành công");
-
-            window.location = "login.html";
-
-        } else {
-
-            alert(data.message || "Đăng ký thất bại");
-
-        }
-
-    } catch (err) {
-
-        alert("Không thể kết nối Server");
-
-    }
-
-}
-
-function logout() {
-
-    localStorage.removeItem("token");
-
-    window.location = "login.html";
-
-}
+});
