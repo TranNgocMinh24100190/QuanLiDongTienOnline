@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản Lý Dòng Tiền</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Quản Lý Dòng Tiền</h1>
+    <nav>
+      <a href="#wallets">Wallets</a>
+      <a href="#transactions">Transactions</a>
+    </nav>
+  </header>
+
+  <!-- Banner -->
+  <section class="banner">
+    <h2>Quản Lý Dòng Tiền</h2>
+    <p>Quản lý tài chính cá nhân dễ dàng</p>
+    <img src="anh1.png" alt="Ảnh quản lý dòng tiền" class="banner-img">
+  </section>
+
+  <!-- Content -->
+  <main id="content">
+    <section id="wallets">
+      <h2>Danh sách ví</h2>
+      <form id="walletForm">
+        <input type="text" id="walletName" placeholder="Tên ví" required>
+        <input type="number" id="walletBalance" placeholder="Số dư" required>
+        <button type="submit">Thêm ví</button>
+      </form>
+      <div id="walletTable"></div>
+    </section>
+
+    <section id="transactions">
+      <h2>Danh sách giao dịch</h2>
+      <form id="transactionForm">
+        <input type="number" id="walletId" placeholder="Wallet ID" required>
+        <input type="text" id="description" placeholder="Mô tả" required>
+        <input type="number" id="amount" placeholder="Số tiền" required>
+        <select id="type">
+          <option value="income">Thu nhập</option>
+          <option value="expense">Chi tiêu</option>
+        </select>
+        <button type="submit">Thêm giao dịch</button>
+      </form>
+      <div id="transactionTable"></div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    Hanoi, August 2026
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
