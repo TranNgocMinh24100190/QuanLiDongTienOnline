@@ -12,14 +12,14 @@ import Transactions from "./pages/Transactions";
 import Transfers from "./pages/Transfers";
 
 // Import Navbar
-import Navbar from "./Navbar";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
