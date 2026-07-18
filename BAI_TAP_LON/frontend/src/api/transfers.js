@@ -1,11 +1,9 @@
-import axios from "axios";
+import API from "./api";
 
-const API = axios.create({
-  baseURL: "http://localhost:3000",
-  withCredentials: true,
-});
+// Tạo transfer
+export const createTransfer = (data) =>
+  API.post("/transfers", data);
 
-export const getTransfers = () => API.get("/transfers");
-export const createTransfer = (data) => API.post("/transfers", data);
-export const updateTransfer = (id, data) => API.put(`/transfers/${id}`, data);
-export const deleteTransfer = (id) => API.delete(`/transfers/${id}`);
+// Reverse transfer
+export const reverseTransfer = (id) =>
+  API.post(`/transfers/${id}/reverse`);

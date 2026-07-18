@@ -15,7 +15,7 @@ exports.getTransactions = async (req, res) => {
       search,
       sort = "desc",
       page = 1,
-      limit = 10
+      limit = 100
     } = req.query;
 
     let query = `
@@ -60,9 +60,9 @@ exports.getTransactions = async (req, res) => {
     // ✅ SORT
     // =====================
     if (sort === "asc") {
-      query += " ORDER BY T.transaction_date ASC";
+      query += " ORDER BY T.transaction_date ASC,T.transaction_id ASC";
     } else {
-      query += " ORDER BY T.transaction_date DESC";
+      query += " ORDER BY T.transaction_date DESC,T.transaction_id DESC";
     }
 
     // =====================

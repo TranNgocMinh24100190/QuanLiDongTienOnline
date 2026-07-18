@@ -8,7 +8,10 @@ const app = express();
 
 // middleware
 app.use(cors({
-  origin: "http://localhost:3000",  // Thay đổi thành URL của frontend
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001"
+  ],  // Thay đổi thành URL của frontend
   credentials: true  // QUAN TRỌNG cho cookie
 }));
 

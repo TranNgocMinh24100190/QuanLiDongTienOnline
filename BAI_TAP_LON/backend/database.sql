@@ -180,3 +180,5 @@ ADD COLUMN is_system BOOLEAN DEFAULT 0;
 ALTER TABLE Transactions 
 ADD COLUMN transfer_group_id BIGINT;
 
+ALTER TABLE Transactions
+ADD is_reversed BOOLEAN DEFAULT FALSE;

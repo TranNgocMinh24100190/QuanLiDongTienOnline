@@ -17,7 +17,7 @@ exports.createTransfer = async (user_id, data) => {
 
   // ✅ check wallet tồn tại
   const [wallets] = await db.query(
-    "SELECT wallet_id FROM Wallets WHERE wallet_id IN (?,?) AND user_id=?",
+    "SELECT wallet_id, wallet_name FROM Wallets WHERE wallet_id IN (?,?) AND user_id=?",
     [from_wallet_id, to_wallet_id, user_id]
   );
 
@@ -25,13 +25,24 @@ exports.createTransfer = async (user_id, data) => {
     throw new Error("Wallet not found");
   }
 
+  const fromWallet = wallets.find((w) => w.wallet_id == from_wallet_id);
+
+  const toWallet = wallets.find((w) => w.wallet_id == to_wallet_id);
+
+  const fromWalletName = fromWallet?.wallet_name || "Unknown";
+
+  const toWalletName = toWallet?.wallet_name || "Unknown";
+
   // ✅ check balance đủ
-  const [fromWallet] = await db.query(
+  const [fromWalletBalance] = await db.query(
     "SELECT balance FROM Wallets WHERE wallet_id=?",
     [from_wallet_id]
   );
 
-  if (fromWallet[0].balance < amount) {
+  const sourceBalance = Number(fromWalletBalance[0].balance);
+  const transferAmount = Number(amount);
+
+  if (sourceBalance < transferAmount) {
     throw new Error("Insufficient balance");
   }
 
@@ -72,7 +83,7 @@ exports.createTransfer = async (user_id, data) => {
         transferOutId,
         amount,
         "Expense",
-        `Transfer to wallet ${to_wallet_id}`,
+        `Chuyển sang ví ${toWalletName}`,
         groupId
       ]
     );
@@ -87,7 +98,7 @@ exports.createTransfer = async (user_id, data) => {
         transferInId,
         amount,
         "Income",
-        `Transfer from wallet ${from_wallet_id}`,
+        `Nhận từ ví ${fromWalletName}`,
         groupId
       ]
     );
@@ -180,15 +191,18 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
       // ✅ insert reverse transaction
       await conn.query(
         `INSERT INTO Transactions
-        (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id)
-        VALUES (?,?,?,?,?,CURDATE(),1,?)`,
+        (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id, is_reversed)
+        VALUES (?,?,?,?,?,CURDATE(),1,?,?)`,
         [
           tx.wallet_id,
           tx.category_id,
           tx.amount,
           reverseType,
-          `Reverse transfer of group ${tx.transfer_group_id}`,
-          tx.transfer_group_id
+          reverseType === "Income"
+            ? `🔄 Hoàn tác giao dịch chuyển tiền`
+            : `🔄 Hoàn tác giao dịch nhận tiền`,
+          tx.transfer_group_id,
+          1
         ]
       );
 
@@ -207,6 +221,13 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
         );
       }
     }
+
+    await conn.query(
+      `UPDATE Transactions 
+       SET is_reversed = 1  
+       WHERE transfer_group_id = ?`,
+      [t.transfer_group_id]
+    );
 
     await conn.commit();
 

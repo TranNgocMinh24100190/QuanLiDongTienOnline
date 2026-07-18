@@ -23,8 +23,11 @@ exports.createTransaction = async (user_id, data) => {
   if (wallet[0].status === "CLOSED") {
     throw new Error("Wallet is closed");
   }
+   
+  const walletBalance = Number(wallet[0].balance);
+  const transactionAmount = Number(amount);
 
-  if (transaction_type === "Expense" && wallet[0].balance < amount) {
+  if (transaction_type === "Expense" && walletBalance < transactionAmount) {
     throw new Error("Insufficient balance");
   }
 
@@ -120,7 +123,7 @@ exports.createTransaction = async (user_id, data) => {
         [newAmount, g.goal_id]
       );
 
-      if (newAmount >= g.target_amount) {
+      if (Number(g.current_amount) < Number(g.target_amount) && newAmount >= Number(g.target_amount)) {
         goalMessage.push(`🎉 Goal "${g.goal_name}" reached!`);
       }
     }
@@ -144,6 +147,12 @@ exports.reverseTransaction = async (user_id, transaction_id) => {
   }
 
   const t = rows[0];
+  if (t.is_reversed) {
+    throw new Error("Transaction has already been reversed");
+  }
+  if (t.description && t.description.startsWith("[REVERSED]")) {
+    throw new Error("Cannot reverse a reversed transaction");
+  }
 
   // 2. xác định loại đảo (chỉ để insert)
   const reversedType =
@@ -151,15 +160,16 @@ exports.reverseTransaction = async (user_id, transaction_id) => {
 
   // 3. insert transaction đảo
   await db.query(
-    `INSERT INTO Transactions(wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer)
-    VALUES (?,?,?,?,?,CURDATE(),?)`,
+    `INSERT INTO Transactions(wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer,is_reversed)
+    VALUES (?,?,?,?,?,CURDATE(),?,?)`,
     [
       t.wallet_id,
       t.category_id,
       t.amount,
       reversedType,
-      `Reverse of transaction ${t.transaction_id}`,
-      t.is_transfer
+      `[REVERSED] ${t.description.replace(/^\[REVERSED\]\s*/, "")}`,
+      t.is_transfer,
+      1
     ]
   );
 
@@ -177,6 +187,25 @@ exports.reverseTransaction = async (user_id, transaction_id) => {
       [t.amount, t.wallet_id]
     );
   }
+  //Hoàn tác ảnh hưởng đến goals
+  if (t.transaction_type === "Income" && !t.is_transfer) {
+    const [goals] = await db.query(
+      "SELECT * FROM Savings_Goals WHERE user_id=?",
+      [user_id]
+    );
+    for(const g of goals) {
+      const newAmount = Math.max(Number(g.current_amount) - Number(t.amount), 0);
+      await db.query(
+        "UPDATE Savings_Goals SET current_amount=? WHERE goal_id=?",
+        [newAmount, g.goal_id]
+      );
+    }
+  }
+  // Đánh dấu transaction gốc đã bị reverse
+  await db.query(
+    "UPDATE Transactions SET is_reversed = 1 WHERE transaction_id = ?",
+    [transaction_id]
+  );
 
   return { message: "Transaction reversed successfully" };
 };

@@ -1,11 +1,13 @@
-import axios from "axios";
+import API from "./api";
 
-const API = axios.create({
-  baseURL: "http://localhost:3000",
-  withCredentials: true,
-});
+// Lấy danh sách giao dịch
+export const getTransactions = () =>
+  API.get("/transactions");
 
-export const getTransactions = () => API.get("/transactions");
-export const createTransaction = (data) => API.post("/transactions", data);
-export const updateTransaction = (id, data) => API.put(`/transactions/${id}`, data);
-export const deleteTransaction = (id) => API.delete(`/transactions/${id}`);
+// Tạo giao dịch mới
+export const createTransaction = (data) =>
+  API.post("/transactions", data);
+
+// Reverse giao dịch
+export const reverseTransaction = (id) =>
+  API.post(`/transactions/${id}/reverse`);

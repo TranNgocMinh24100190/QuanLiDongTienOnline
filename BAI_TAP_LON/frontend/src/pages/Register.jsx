@@ -1,22 +1,32 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
-import "./Auth.css";
+import "../styles/Auth.css";
 
 function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/auth/register", {
-        username,
+      await axios.post("http://localhost:3000/auth/register", {
+        full_name: username,
         email,
-        password,
-      });
+        password
+      },
+      {
+        withCredentials: true
+      }
+    );
       setMessage("Đăng ký thành công! Bạn có thể đăng nhập.");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (err) {
       setMessage("Có lỗi xảy ra khi đăng ký.");
     }
@@ -49,7 +59,12 @@ function Register() {
         />
         <button type="submit">Đăng ký</button>
       </form>
-      {message && <p className="auth-message">{message}</p>}
+      {message && (
+        <p className="auth-message">{message}</p>
+      )}
+      <p className="auth-switch">
+        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+      </p>
     </div>
   );
 }

@@ -1,0 +1,76 @@
+.table-container {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  background: white;
+
+  border-radius: 16px;
+
+  overflow: hidden;
+}
+
+.table thead {
+  background: #f1f5f9;
+}
+
+.table th {
+  padding: 16px;
+
+  text-align: left;
+
+  font-weight: 600;
+}
+
+.table td {
+  padding: 16px;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.table tr:hover {
+  background: #f8fafc;
+}
+
+.table-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  text-align: left;
+}
+
+.table th {
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.table tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table tr:hover {
+  background: #f8fafc;
+}
+
+.income {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.expense {
+  color: #dc2626;
+  font-weight: 600;
+}

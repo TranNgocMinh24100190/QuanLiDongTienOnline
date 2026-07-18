@@ -1,11 +1,16 @@
-import axios from "axios";
+import API from "./api";
 
-const API = axios.create({
-  baseURL: "http://localhost:3000",
-  withCredentials: true,
-});
-
+// Lấy danh sách mục tiêu
 export const getGoals = () => API.get("/goals");
-export const createGoal = (data) => API.post("/goals", data);
-export const updateGoal = (id, data) => API.put(`/goals/${id}`, data);
-export const deleteGoal = (id) => API.delete(`/goals/${id}`);
+
+// Tạo mục tiêu
+export const createGoal = (data) =>
+  API.post("/goals", data);
+
+// Cập nhật mục tiêu
+export const updateGoal = (id, data) =>
+  API.put(`/goals/${id}`, data);
+
+// Xóa mục tiêu
+export const deleteGoal = (id) =>
+  API.delete(`/goals/${id}`);
