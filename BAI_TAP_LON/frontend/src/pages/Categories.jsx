@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   getCategories,
   createCategory,
+  updateCategory,
   deleteCategory,
 } from "../api/categories";
 
@@ -12,12 +13,11 @@ import "../styles/Forms.css";
 
 function Categories() {
   const [categories, setCategories] = useState([]);
+  const [category_name, setCategoryName] = useState("");
+  const [type, setType] = useState("Expense");
 
-  const [category_name, setCategoryName] =
-    useState("");
-
-  const [type, setType] =
-    useState("Expense");
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
 
   const loadCategories = async () => {
     try {
@@ -45,6 +45,21 @@ function Categories() {
     } catch (err) {
       alert(
         err?.response?.data?.message
+      );
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await updateCategory(editingCategory.category_id, {
+        name: editCategoryName,
+      });
+      setEditingCategory(null);
+      setEditCategoryName("");
+      loadCategories();
+    } catch (err) {
+      alert(
+        err?.response?.data?.message || "Không thể cập nhật danh mục"
       );
     }
   };
@@ -133,21 +148,54 @@ function Categories() {
             <p>{c.type}</p>
 
             {!c.is_system && (
-              <button
-                className="btn btn-danger"
-                onClick={() =>
-                  handleDelete(
-                    c.category_id
-                  )
-                }
-              >
-                Xóa
-              </button>
+              <div className="card-actions"
+                style={{ marginTop: "15px", display: "flex", gap: "50px" }}>
+                <button
+                  className="btn btn-danger"
+                  onClick={() =>
+                    handleDelete(c.category_id)
+                  }
+                >
+                  Xóa
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingCategory(c);
+                    setEditCategoryName(c.category_name);
+                  }}
+                >
+                  Sửa
+                </button>
+              </div>
             )}
           </div>
         ))}
       </div>
-
+      {editingCategory && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Sửa Danh Mục</h2>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Tên danh mục"
+              value={editCategoryName}
+              onChange={(e) => setEditCategoryName(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button className="btn btn-danger"
+                onClick={() => setEditingCategory(null)}
+              >
+                Hủy
+              </button>
+              <button className="btn btn-primary" onClick={handleUpdate}>
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

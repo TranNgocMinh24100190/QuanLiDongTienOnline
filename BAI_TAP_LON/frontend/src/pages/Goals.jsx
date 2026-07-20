@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   getGoals,
   createGoal,
+  updateGoal,
   deleteGoal,
 } from "../api/goals";
 
@@ -12,14 +13,13 @@ import "../styles/Forms.css";
 
 function Goals() {
 
-  const [goals, setGoals] =
-    useState([]);
+  const [goals, setGoals] = useState([]);
+  const [goal_name, setGoalName] = useState("");
+  const [target_amount, setTargetAmount] = useState("");
 
-  const [goal_name, setGoalName] =
-    useState("");
-
-  const [target_amount,
-    setTargetAmount] = useState("");
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [editGoalName, setEditGoalName] = useState("");
+  const [editTargetAmount, setEditTargetAmount] = useState("");
 
   const loadGoals = async () => {
     try {
@@ -53,6 +53,23 @@ function Goals() {
       );
     }
   };
+
+  const handleUpdate = async () => {
+    try {
+      await updateGoal(editingGoal.goal_id, {
+        goal_name: editGoalName,
+        target_amount: Number(editTargetAmount)
+      });
+      setEditingGoal(null);
+      setEditGoalName("");
+      setEditTargetAmount("");
+      loadGoals();
+    } catch (err) {
+      alert(
+        err?.response?.data?.message || "Không thể cập nhật mục tiêu"
+      );
+    }
+  }
 
   const handleDelete = async (id) => {
     try {
@@ -194,27 +211,66 @@ function Goals() {
                 </div>
 
               )}
-
-              <button
-                className="btn btn-danger"
-                onClick={() =>
-                  handleDelete(
-                    g.goal_id
-                  )
-                }
-              >
-                Xóa
-              </button>
-
+              <div style={{ marginTop: "15px", display: "flex", gap: "50px" }}>
+                <button
+                  className="btn btn-danger"
+                  onClick={() =>
+                    handleDelete(
+                      g.goal_id
+                    )
+                  }
+                >
+                  Xóa
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingGoal(g);
+                    setEditGoalName(g.goal_name);
+                    setEditTargetAmount(g.target_amount);
+                  }}
+                >
+                  Sửa
+                </button>
+              </div>
             </div>
-
           );
-
         })}
-
-
       </div>
-
+      {editingGoal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Sửa Mục Tiêu</h2>
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Tên mục tiêu"
+              value={editGoalName}
+              onChange={(e) => setEditGoalName(e.target.value)}
+            />
+            <input
+              className="form-input"
+              type="number"
+              placeholder="Mục tiêu"
+              value={editTargetAmount}
+              onChange={(e) => setEditTargetAmount(e.target.value)}
+              style={{ marginTop: "10px" }}
+            />
+            <div className="modal-actions">
+              <button className="btn btn-danger"
+                onClick={() => {
+                  setEditingGoal(null);
+                }}
+              >
+                Hủy
+              </button>
+              <button className="btn btn-primary" onClick={handleUpdate}>
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

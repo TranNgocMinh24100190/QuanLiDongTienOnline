@@ -5,6 +5,7 @@ import { createTransfer } from "../api/transfers";
 
 import "../styles/Layouts.css";
 import "../styles/Forms.css";
+import "../styles/Cards.css";
 
 function Transfers() {
   const [wallets, setWallets] = useState([]);
@@ -14,6 +15,8 @@ function Transfers() {
     to_wallet_id: "",
     amount: "",
   });
+
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     const loadWallets = async () => {
@@ -32,7 +35,10 @@ function Transfers() {
     try {
       await createTransfer(form);
 
-      alert("Chuyển tiền thành công");
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 2000);
 
       setForm({
         from_wallet_id: "",
@@ -141,13 +147,20 @@ function Transfers() {
             >
               Chuyển tiền
             </button>
-
           </div>
-
         </div>
-
       </div>
-
+      {showSuccess && (
+        <div className="modal-overlay">
+          <div className="modal"
+            style={{ width: "400px", textAlign: "center" }}>
+            <h2>Chuyển tiền thành công!</h2>
+            <p style={{ marginTop: "10px" }}>
+              Giao dịch chuyển tiền đã được thực hiện thành công.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

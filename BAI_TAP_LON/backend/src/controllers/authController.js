@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 // ✅ generate token
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { user_id: user.user_id },
+    { user_id: user.user_id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "15m" }
   );
@@ -13,7 +13,7 @@ const generateAccessToken = (user) => {
 
 const generateRefreshToken = (user) => {
   return jwt.sign(
-    { user_id: user.user_id },
+    { user_id: user.user_id, role: user.role },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "7d" }
   );
@@ -110,7 +110,8 @@ exports.login = async (req, res) => {
     });
 
     res.json({
-      message: "Login success"
+      message: "Login success",
+      role: user.role
     });
 
   } catch (err) {
@@ -135,7 +136,7 @@ exports.refreshToken = (req, res) => {
     );
 
     const newAccessToken = jwt.sign(
-      { user_id: decoded.user_id },
+      { user_id: decoded.user_id, role: decoded.role },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );

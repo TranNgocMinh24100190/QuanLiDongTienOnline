@@ -182,3 +182,11 @@ ADD COLUMN transfer_group_id BIGINT;
 
 ALTER TABLE Transactions
 ADD is_reversed BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE Users
+ADD role ENUM('USER','ADMIN')
+DEFAULT 'USER';
+
+UPDATE Users
+SET role = 'ADMIN'
+WHERE email = 'test123@gmail.com';

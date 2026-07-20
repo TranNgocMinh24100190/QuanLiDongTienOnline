@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import "./Navbar.css";
 
 function Navbar() {
+  const role = localStorage.getItem("role");
   return (
     <aside className="sidebar">
       <h2 className="logo">💰 Money Manager</h2>
@@ -15,11 +16,15 @@ function Navbar() {
         <Link to="/goals">🎯 Mục tiêu</Link>
         <Link to="/budgets">📈 Ngân sách</Link>
         <Link to="/categories">📂 Danh mục</Link>
+        {role === "ADMIN" && (
+          <Link to="/admin">👑 Admin</Link>
+        )}
       </nav>
 
       <button
         className="logout-btn"
         onClick={() => {
+          localStorage.removeItem("role");
           window.location.href = "/login";
         }}
       >

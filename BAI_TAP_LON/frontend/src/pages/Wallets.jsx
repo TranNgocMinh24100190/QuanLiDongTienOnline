@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   getWallets,
   createWallet,
+  updateWallet,
   closeWallet,
   openWallet,
 } from "../api/wallets";
@@ -16,6 +17,9 @@ function Wallets() {
 
   const [walletName, setWalletName] = useState("");
   const [walletType, setWalletType] = useState("Cash");
+
+  const [editingWallet, setEditingWallet] = useState(null);
+  const [newWalletName, setNewWalletName] = useState("");
 
   const loadWallets = async () => {
     try {
@@ -50,6 +54,34 @@ function Wallets() {
     }
   };
 
+  const handleRenameWallet = async () => {
+
+    try {
+
+      await updateWallet(
+        editingWallet.wallet_id,
+        {
+          wallet_name: newWalletName
+        }
+      );
+
+      setEditingWallet(null);
+
+      setNewWalletName("");
+
+      loadWallets();
+
+    } catch (err) {
+
+      alert(
+        err?.response?.data?.message ||
+        "Không thể đổi tên ví"
+      );
+
+    }
+
+  };
+  
   const handleCloseWallet = async (id) => {
     try {
       await closeWallet(id);
@@ -203,8 +235,7 @@ function Wallets() {
                   gap: "10px",
                 }}
               >
-                {wallet.status ===
-                "ACTIVE" ? (
+                {wallet.status === "ACTIVE" ? (
                   <button
                     className="btn btn-danger"
                     onClick={() =>
@@ -227,11 +258,50 @@ function Wallets() {
                     Mở ví
                   </button>
                 )}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingWallet(wallet);
+                    setNewWalletName(wallet.wallet_name);
+                  }}
+                  style={{
+                    marginLeft: "10px"
+                  }}
+                >
+                  Sửa tên
+                </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+      {editingWallet && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>Sửa tên ví</h2>
+            <input className="form-input"
+              type="text"
+              placeholder="Tên ví"
+              value={newWalletName}
+              onChange={(e) =>
+                setNewWalletName(e.target.value)
+              }
+            />
+            <div className="modal-actions">
+              <button className="btn btn-danger"
+                onClick={() => setEditingWallet(null)}
+              >
+                Hủy
+              </button>
+              <button className="btn btn-primary"
+                onClick={handleRenameWallet}
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

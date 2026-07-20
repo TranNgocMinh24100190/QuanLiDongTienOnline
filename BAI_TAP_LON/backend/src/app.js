@@ -1,16 +1,30 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser"); 
-const session = require("express-session"); 
+const session = require("express-session");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit"); 
 const errorMiddleware = require("./middleware/errorMiddleware");
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    message:
+      "Too many requests. Please try again later."
+  },
+
+  standardHeaders: true,
+
+  legacyHeaders: false
+});
 const app = express();
+app.use(helmet());
 
 // middleware
 app.use(cors({
   origin: [
-    "http://localhost:3000",
-    "http://localhost:3001"
+    "http://localhost:3000"
   ],  // Thay đổi thành URL của frontend
   credentials: true  // QUAN TRỌNG cho cookie
 }));
@@ -35,7 +49,8 @@ app.get("/", (req, res) => {
 });
 
 // routes
-app.use("/auth", require("./routes/authRoutes"));
+app.use("/auth", authLimiter, require("./routes/authRoutes"));
+app.use("/admin", require("./routes/adminRoutes"));
 app.use("/wallets", require("./routes/walletRoutes"));
 app.use("/transactions", require("./routes/transactionRoutes"));
 app.use("/budgets", require("./routes/budgetRoutes"));

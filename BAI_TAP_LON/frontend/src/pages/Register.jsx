@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { register } from "../api/auth";
 import "../styles/Auth.css";
 
 function Register() {
@@ -14,15 +14,12 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:3000/auth/register", {
+      await register({
         full_name: username,
         email,
         password
-      },
-      {
-        withCredentials: true
-      }
-    );
+      });
+
       setMessage("Đăng ký thành công! Bạn có thể đăng nhập.");
       setTimeout(() => {
         navigate("/login");

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   getBudgets,
   createBudget,
+  updateBudget,
   deleteBudget,
 } from "../api/budgets";
 
@@ -17,20 +18,14 @@ import "../styles/Tables.css";
 
 function Budgets() {
 
-  const [budgets, setBudgets] =
-    useState([]);
+  const [budgets, setBudgets] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState({category_id: "", amount_limit: "", month: "", year: ""});
 
-  const [categories,
-    setCategories] =
-    useState([]);
-
-  const [form, setForm] =
-    useState({
-      category_id: "",
-      amount_limit: "",
-      month: "",
-      year: "",
-    });
+  const [editingBudget, setEditingBudget] = useState(null);
+  const [editLimit, setEditLimit] = useState("");
+  const [editMonth, setEditMonth] = useState("");
+  const [editYear, setEditYear] = useState("");
 
   const loadData = async () => {
     try {
@@ -71,6 +66,22 @@ function Budgets() {
 
         alert(err?.response?.data?.message || "Không thể tạo ngân sách");
       }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await updateBudget(editingBudget.budget_id, {
+        amount_limit: Number(editLimit),
+        month: Number(editMonth),
+        year: Number(editYear),
+      });
+      setEditingBudget(null);
+      loadData();
+    } catch (err) {
+      alert(
+        err?.response?.data?.message || "Không thể cập nhật ngân sách"
+      );
+    }
   };
 
   const handleDelete = async (id) => {
@@ -294,29 +305,85 @@ function Budgets() {
                 </div>
 
               )}
+              <div style={{ marginTop: "15px", display: "flex", gap: "50px" }}>
+                <button
+                  className="btn btn-danger"
+                  onClick={() =>
+                    handleDelete(
+                      b.budget_id
+                    )
+                  }
+                  style={{
+                    marginTop: "12px"
+                  }}
+                >
+                  Xóa
+                </button>
 
-              <button
-                className="btn btn-danger"
-                onClick={() =>
-                  handleDelete(
-                    b.budget_id
-                  )
-                }
-                style={{
-                  marginTop: "12px"
-                }}
-              >
-                Xóa
-              </button>
-
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingBudget(b);
+                    setEditLimit(b.amount_limit);
+                    setEditMonth(b.month);
+                    setEditYear(b.year);
+                  }}
+                  style={{
+                    marginTop: "12px",
+                    marginRight: "10px"
+                  }}
+                >
+                  Sửa
+                </button>
+              </div>
             </div>
-
           );
-
         })}
-
       </div>
-
+      {editingBudget && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2>
+              Sửa ngân sách
+            </h2>
+            <input
+              className="form-input"
+              type="number"
+              placeholder="Giới hạn"
+              value={editLimit}
+              onChange={(e) => setEditLimit(e.target.value)}
+            />
+            <input
+              className="form-input"
+              type="number"
+              placeholder="Tháng"
+              value={editMonth}
+              onChange={(e) => setEditMonth(e.target.value)}
+              style={{ marginTop: "10px" }}
+            />
+            <input
+              className="form-input"
+              type="number"
+              placeholder="Năm"
+              value={editYear}
+              onChange={(e) => setEditYear(e.target.value)}
+              style={{ marginTop: "10px" }}
+            />
+            <div className="modal-actions">
+              <button className="btn btn-danger"
+                onClick={() => setEditingBudget(null)}
+              >
+                Hủy
+              </button>
+              <button className="btn btn-primary"
+                onClick={handleUpdate}
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

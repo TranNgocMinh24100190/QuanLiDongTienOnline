@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { login } from "../api/auth";
 import "../styles/Auth.css";
 
 function Login() {
@@ -11,14 +11,13 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:3000/auth/login", {
+      const res = await login({
         email,
         password,
-      },
-      {
-        withCredentials: true
-      }
-    );
+      });
+
+      localStorage.setItem("role", res.data.role);
+      
       setMessage("Đăng nhập thành công!");
       setTimeout(() => {
         window.location.href = "/dashboard";

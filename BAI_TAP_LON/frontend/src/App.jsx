@@ -13,6 +13,7 @@ import Transfers from "./pages/Transfers";
 import Goals from "./pages/Goals";
 import Budgets from "./pages/Budgets";
 import Categories from "./pages/Categories";
+import Admin from "./pages/Admin";
 
 function AppRoutes() {
   const location = useLocation();
@@ -82,6 +83,11 @@ function AppRoutes() {
         <Route
           path="/categories"
           element={<Categories />}
+        />
+        {/* Admin Page */}
+        <Route
+          path="/admin"
+          element={<Admin />}
         />
       </Routes>
     </>

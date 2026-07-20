@@ -102,7 +102,7 @@ exports.createBudget = async (req, res) => {
 exports.updateBudget = async (req, res) => {
   try {
     const { id } = req.params;
-    const { amount_limit } = req.body;
+    const { amount_limit, month, year } = req.body;
 
     if (!amount_limit) {
       return res.status(400).json({ message: "Amount limit is required" });
@@ -113,8 +113,8 @@ exports.updateBudget = async (req, res) => {
     }
 
     const [result] = await db.query(
-      "UPDATE Budgets SET amount_limit=? WHERE budget_id=? AND user_id=?",
-      [amount_limit, id, req.user.user_id]
+      "UPDATE Budgets SET amount_limit=?, month=?, year=? WHERE budget_id=? AND user_id=?",
+      [amount_limit, month, year, id, req.user.user_id]
     );
 
     if (!result || result.affectedRows === 0) {

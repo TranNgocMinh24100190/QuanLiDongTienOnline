@@ -56,33 +56,27 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-// ✅ UPDATE (THÊM type – nhưng không bắt buộc)
+// ✅ UPDATE 
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type } = req.body;
+    const { name } = req.body;
 
-    // ✅ kiểm tra name (giữ nguyên logic cũ)
-    if (!name) {
+    if (!name || !name.trim()) {
       return res.status(400).json({
         message: "Name is required"
       });
     }
 
-    // ✅ THÊM check type nếu có
-    if (type && !["Income", "Expense"].includes(type)) {
-      return res.status(400).json({
-        message: "Invalid category type"
-      });
-    }
-    
-    // ✅ THÊM check system category (không cho update)
     const [rows] = await db.query(
-      "SELECT is_system FROM Categories WHERE category_id=? AND user_id=?",
+      `SELECT is_system 
+      FROM Categories 
+      WHERE category_id = ?
+      AND user_id = ?`,
       [id, req.user.user_id]
     );
 
-    if (!rows || rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({
         message: "Category not found"
       });
@@ -90,23 +84,18 @@ exports.updateCategory = async (req, res) => {
 
     if (rows[0].is_system === 1) {
       return res.status(400).json({
-        message: "System categories cannot be updated"
+        message:
+          "System categories cannot be updated"
       });
     }
 
-    // ✅ UPDATE linh hoạt
-    let query = "UPDATE Categories SET category_name=?";
-    let params = [name.trim()];
-
-    if (type) {
-      query += ", type=?";
-      params.push(type);
-    }
-
-    query += " WHERE category_id=? AND user_id=?";
-    params.push(id, req.user.user_id);
-
-    const [result] = await db.query(query, params);
+    const [result] = await db.query(
+      `UPDATE Categories
+      SET category_name = ?
+      WHERE category_id = ?
+      AND user_id = ?`,
+      [name.trim(), id, req.user.user_id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
@@ -114,10 +103,11 @@ exports.updateCategory = async (req, res) => {
       });
     }
 
-    res.json({ message: "Category updated" });
+    res.json({message:"Category updated"});
 
   } catch (err) {
-    res.status(500).json({ message: "Failed to update category" });
+    console.error(err);
+    res.status(500).json({message: "Failed to update category"});
   }
 };
 
