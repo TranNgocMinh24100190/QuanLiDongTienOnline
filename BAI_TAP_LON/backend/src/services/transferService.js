@@ -1,13 +1,14 @@
 const db = require("../config/db");
+const Transfer = require("../models/Transfer");
 
 exports.createTransfer = async (user_id, data) => {
-  const { from_wallet_id, to_wallet_id, amount } = data;
+  const { from_wallet_id, to_wallet_id, amount, note } = data;
 
-  if (!from_wallet_id || !to_wallet_id || !amount) {
+  if (from_wallet_id == null || to_wallet_id == null || amount == null) {
     throw new Error("Missing required fields");
   }
 
-  if (amount <= 0) {
+  if (Number(amount) <= 0) {
     throw new Error("Invalid amount");
   }
 
@@ -15,9 +16,8 @@ exports.createTransfer = async (user_id, data) => {
     throw new Error("Cannot transfer to same wallet");
   }
 
-  // ✅ check wallet tồn tại
   const [wallets] = await db.query(
-    "SELECT wallet_id, wallet_name FROM Wallets WHERE wallet_id IN (?,?) AND user_id=?",
+    "SELECT wallet_id, wallet_name FROM Wallets WHERE wallet_id IN (?, ?) AND user_id=?",
     [from_wallet_id, to_wallet_id, user_id]
   );
 
@@ -26,14 +26,11 @@ exports.createTransfer = async (user_id, data) => {
   }
 
   const fromWallet = wallets.find((w) => w.wallet_id == from_wallet_id);
-
   const toWallet = wallets.find((w) => w.wallet_id == to_wallet_id);
 
   const fromWalletName = fromWallet?.wallet_name || "Unknown";
-
   const toWalletName = toWallet?.wallet_name || "Unknown";
 
-  // ✅ check balance đủ
   const [fromWalletBalance] = await db.query(
     "SELECT balance FROM Wallets WHERE wallet_id=?",
     [from_wallet_id]
@@ -46,19 +43,18 @@ exports.createTransfer = async (user_id, data) => {
     throw new Error("Insufficient balance");
   }
 
-  // ✅ lấy category Transfer Out
   const [outCat] = await db.query(
-    `SELECT category_id FROM Categories 
+    `SELECT category_id FROM Categories
      WHERE user_id=? AND category_name="Transfer Out"`,
     [user_id]
   );
 
-  // ✅ lấy category Transfer In
   const [inCat] = await db.query(
-    `SELECT category_id FROM Categories 
+    `SELECT category_id FROM Categories
      WHERE user_id=? AND category_name="Transfer In"`,
     [user_id]
   );
+
   if (outCat.length === 0 || inCat.length === 0) {
     throw new Error("Transfer categories not found");
   }
@@ -73,11 +69,18 @@ exports.createTransfer = async (user_id, data) => {
   try {
     await conn.beginTransaction();
 
-    // ✅ 1. insert Expense (wallet nguồn)
+    // insert transfer header into Transfers table (thema phù hợp với schema)
+    const [transferInsert] = await conn.query(
+      `INSERT INTO Transfers (from_wallet_id, to_wallet_id, amount, transfer_date, note)
+       VALUES (?, ?, ?, CURDATE(), ?)`,
+      [from_wallet_id, to_wallet_id, amount, note || null]
+    );
+
+    // insert expense transaction (nguồn)
     const [outTx] = await conn.query(
       `INSERT INTO Transactions
-    (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id)
-     VALUES (?,?,?,?,?,CURDATE(),1,?)`,
+       (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id)
+       VALUES (?, ?, ?, ?, ?, CURDATE(), 1, ?)`,
       [
         from_wallet_id,
         transferOutId,
@@ -88,11 +91,11 @@ exports.createTransfer = async (user_id, data) => {
       ]
     );
 
-    // ✅ 2. insert Income (wallet đích)
+    // insert income transaction (đích)
     const [inTx] = await conn.query(
       `INSERT INTO Transactions
-    (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id)
-     VALUES (?,?,?,?,?,CURDATE(),1,?)`,
+       (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id)
+       VALUES (?, ?, ?, ?, ?, CURDATE(), 1, ?)`,
       [
         to_wallet_id,
         transferInId,
@@ -102,7 +105,8 @@ exports.createTransfer = async (user_id, data) => {
         groupId
       ]
     );
-    // ✅ 3. update balance
+
+    // update balances
     await conn.query(
       "UPDATE Wallets SET balance = balance - ? WHERE wallet_id=?",
       [amount, from_wallet_id]
@@ -115,12 +119,24 @@ exports.createTransfer = async (user_id, data) => {
 
     await conn.commit();
 
+    const transferModel = new Transfer({
+      transfer_id: transferInsert.insertId,
+      from_wallet_id,
+      to_wallet_id,
+      amount: transferAmount,
+      transfer_date: new Date(),
+      note: note || "",
+      from_wallet_name: fromWalletName,
+      to_wallet_name: toWalletName,
+      from_transaction_id: outTx.insertId,
+      to_transaction_id: inTx.insertId,
+      transfer_group_id: groupId,
+      is_reversed: false
+    });
+
     return {
       message: "Transfer success",
-      transfer: {
-        from_transaction_id: outTx.insertId,
-        to_transaction_id: inTx.insertId
-      }
+      data: transferModel.toJSON()
     };
   } catch (err) {
     await conn.rollback();
@@ -131,7 +147,6 @@ exports.createTransfer = async (user_id, data) => {
 };
 
 exports.reverseTransfer = async (user_id, transaction_id) => {
-  // ✅ 1. lấy transaction gốc + check quyền
   const [rows] = await db.query(
     `SELECT T.*, W.user_id
      FROM Transactions T
@@ -146,12 +161,10 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
 
   const t = rows[0];
 
-  // ✅ 2. check group_id tồn tại
   if (!t.transfer_group_id) {
     throw new Error("Transfer group not found");
   }
 
-  // ✅ 3. lấy toàn bộ group transaction
   const [groupTx] = await db.query(
     `SELECT T.*, W.user_id
      FROM Transactions T
@@ -164,35 +177,18 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
     throw new Error("Invalid transfer group");
   }
 
-  // ✅ 4. chặn reverse nhiều lần
-  const [check] = await db.query(
-    `SELECT transaction_id FROM Transactions
-     WHERE transfer_group_id=? 
-     AND description LIKE '%Reverse transfer%' 
-     LIMIT 1`,
-    [t.transfer_group_id]
-  );
-
-  if (check.length > 0) {
-    throw new Error("Transfer already reversed");
-  }
-
-  // ✅ 5. bắt đầu transaction DB
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
-    for (let tx of groupTx) {
+    for (const tx of groupTx) {
+      const reverseType = tx.transaction_type === "Income" ? "Expense" : "Income";
 
-      const reverseType =
-        tx.transaction_type === "Income" ? "Expense" : "Income";
-
-      // ✅ insert reverse transaction
       await conn.query(
         `INSERT INTO Transactions
-        (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id, is_reversed)
-        VALUES (?,?,?,?,?,CURDATE(),1,?,?)`,
+         (wallet_id, category_id, amount, transaction_type, description, transaction_date, is_transfer, transfer_group_id, is_reversed)
+         VALUES (?,?,?,?,?,CURDATE(),1,?,?)`,
         [
           tx.wallet_id,
           tx.category_id,
@@ -206,15 +202,12 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
         ]
       );
 
-      // ✅ update balance
       if (tx.transaction_type === "Income") {
-        // undo income → trừ
         await conn.query(
           "UPDATE Wallets SET balance = balance - ? WHERE wallet_id=?",
           [tx.amount, tx.wallet_id]
         );
       } else {
-        // undo expense → cộng
         await conn.query(
           "UPDATE Wallets SET balance = balance + ? WHERE wallet_id=?",
           [tx.amount, tx.wallet_id]
@@ -223,18 +216,26 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
     }
 
     await conn.query(
-      `UPDATE Transactions 
-       SET is_reversed = 1  
+      `UPDATE Transactions
+       SET is_reversed = 1
        WHERE transfer_group_id = ?`,
       [t.transfer_group_id]
     );
 
     await conn.commit();
 
-    return {
-      message: "Transfer reversed successfully"
-    };
+    const transferModel = new Transfer({
+      transfer_group_id: t.transfer_group_id,
+      amount: Number(t.amount),
+      transfer_date: new Date(),
+      note: "Reverse transfer",
+      is_reversed: true
+    });
 
+    return {
+      message: "Transfer reversed successfully",
+      data: transferModel.toJSON()
+    };
   } catch (err) {
     await conn.rollback();
     throw err;

@@ -1,5 +1,13 @@
 const db = require("../config/db");
 const service = require("../services/walletService");
+const Wallet = require("../models/Wallet");
+
+const serializeWallet = (payload) => {
+  if (!payload) return null;
+
+  const wallet = payload instanceof Wallet ? payload : new Wallet(payload);
+  return wallet.toJSON();
+};
 
 // ✅ CREATE WALLET
 exports.createWallet = async (req, res) => {
@@ -10,13 +18,12 @@ exports.createWallet = async (req, res) => {
       return res.status(400).json({ message: "Wallet name and type are required" });
     }
 
-    const result = await service.createWallet(
-      req.user.user_id,
-      req.body
-    );
+    const result = await service.createWallet(req.user.user_id, req.body);
 
-    res.status(201).json(result);
-
+    res.status(201).json({
+      ...result,
+      data: result.data ? serializeWallet(result.data) : null
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({
@@ -32,7 +39,10 @@ exports.getWallets = async (req, res) => {
       "SELECT * FROM Wallets WHERE user_id=?",
       [req.user.user_id]
     );
-    res.json(rows);
+
+    const wallets = rows.map((row) => serializeWallet(row));
+
+    res.json(wallets);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to get wallets" });
@@ -43,7 +53,7 @@ exports.getWallets = async (req, res) => {
 exports.getWalletById = async (req, res) => {
   try {
     const id = req.params.id;
-    if(!id || isNaN(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({ message: "Invalid wallet ID" });
     }
 
@@ -51,10 +61,12 @@ exports.getWalletById = async (req, res) => {
       "SELECT * FROM Wallets WHERE wallet_id=? AND user_id=?",
       [id, req.user.user_id]
     );
+
     if (rows.length === 0) {
       return res.status(404).json({ message: "Wallet not found" });
     }
-    res.json(rows[0]);
+
+    res.json(serializeWallet(rows[0]));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to get wallet" });
@@ -65,15 +77,16 @@ exports.getWalletById = async (req, res) => {
 exports.updateWallet = async (req, res) => {
   try {
     const id = req.params.id;
-    if(!id || isNaN(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({ message: "Invalid wallet ID" });
     }
-    const result = await service.updateWallet(
-      req.user.user_id,
-      id,
-      req.body
-    );
-    res.json(result);
+
+    const result = await service.updateWallet(req.user.user_id, id, req.body);
+
+    res.json({
+      ...result,
+      data: result.data ? serializeWallet(result.data) : null
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err.message });
@@ -84,15 +97,16 @@ exports.updateWallet = async (req, res) => {
 exports.closeWallet = async (req, res) => {
   try {
     const id = req.params.id;
-    if(!id || isNaN(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({ message: "Invalid wallet ID" });
     }
 
-    const result = await service.closeWallet(
-      req.user.user_id,
-      id
-    );
-    res.json(result);
+    const result = await service.closeWallet(req.user.user_id, id);
+
+    res.json({
+      ...result,
+      data: result.data ? serializeWallet(result.data) : null
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err.message });
@@ -103,15 +117,16 @@ exports.closeWallet = async (req, res) => {
 exports.openWallet = async (req, res) => {
   try {
     const id = req.params.id;
-    if(!id || isNaN(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({ message: "Invalid wallet ID" });
     }
 
-    const result = await service.openWallet(
-      req.user.user_id,
-      id
-    );
-    res.json(result);
+    const result = await service.openWallet(req.user.user_id, id);
+
+    res.json({
+      ...result,
+      data: result.data ? serializeWallet(result.data) : null
+    });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err.message });

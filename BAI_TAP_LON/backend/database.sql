@@ -189,4 +189,4 @@ DEFAULT 'USER';
 
 UPDATE Users
 SET role = 'ADMIN'
-WHERE email = 'test123@gmail.com';
+WHERE email = 'admin@gmail.com';

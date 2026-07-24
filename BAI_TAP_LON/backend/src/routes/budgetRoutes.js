@@ -16,7 +16,11 @@ router.post("/", auth, [
 ], validate, ctrl.createBudget);
 
 // ✅ UPDATE
-router.put("/:id", auth, ctrl.updateBudget);
+router.put("/:id", auth, [
+  body("amount_limit").optional().isFloat({ min: 1 }).withMessage("Giới hạn ngân sách phải là số dương"),
+  body("month").optional().isInt({ min: 1, max: 12 }).withMessage("Tháng không hợp lệ"),
+  body("year").optional().isInt({ min: 2000 }).withMessage("Năm không hợp lệ")
+], validate, ctrl.updateBudget);
 
 // ✅ DELETE
 router.delete("/:id", auth, ctrl.deleteBudget);

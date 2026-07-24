@@ -10,9 +10,9 @@ router.get("/", auth, ctrl.getTransactions);
 // ✅ CREATE transaction
 router.post("/", auth,[
     body("amount").isFloat({ min: 1 }).withMessage("Số tiền phải là số dương")
-], ctrl.createTransaction);
+], validate ,ctrl.createTransaction);
 
 // ✅ REVERSE transaction
-router.post("/:id/reverse", auth, ctrl.reverseTransaction);
+router.post("/reverse/:id", auth, ctrl.reverseTransaction);
 
 module.exports = router;

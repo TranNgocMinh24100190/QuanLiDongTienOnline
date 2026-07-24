@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const ctrl = require("../controllers/authController");
+const auth = require("../middleware/authMiddleware");
 const { body } = require("express-validator");
 const validate = require("../middleware/validate");
 
@@ -14,6 +15,7 @@ router.post("/login", [
 ], validate, ctrl.login);
 
 // ✅ NEW
+router.get("/me", auth, ctrl.me);
 router.post("/refresh", ctrl.refreshToken);
 router.post("/logout", ctrl.logout);
 

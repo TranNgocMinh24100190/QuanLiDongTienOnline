@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -47,6 +48,16 @@ exports.register = async (req, res) => {
 
     const user_id = result.insertId;
 
+    const user = new User({
+      user_id,
+      full_name,
+      email,
+      password_hash: hash,
+      role: "USER",
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
     // ✅ AUTO CREATE SYSTEM CATEGORY
     await db.query(
       `INSERT INTO Categories (user_id, category_name, type, is_system)
@@ -83,7 +94,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "User not found" });
     }
 
-    const user = rows[0];
+    const user = new User(rows[0]);
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
@@ -154,7 +165,28 @@ exports.refreshToken = (req, res) => {
     res.status(403).json({ message: "Invalid refresh token" });
   }
 };
+// ✅ PROFILE
+exports.me = async (req, res) => {
+  try {
+    if (!req.user || !req.user.user_id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
+    const [rows] = await db.query(
+      "SELECT user_id, full_name, email, role FROM Users WHERE user_id = ?",
+      [req.user.user_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ data: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to get user profile" });
+  }
+}; 
 
 // ✅ LOGOUT
 exports.logout = (req, res) => {

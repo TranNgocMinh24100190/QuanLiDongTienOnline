@@ -1,9 +1,11 @@
 const db = require("../config/db");
+const Wallet = require("../models/Wallet");
+
 // ✅ CREATE WALLET
 exports.createWallet = async (user_id, data) => {
   const { wallet_name, wallet_type } = data;
 
-   if (!wallet_name || !wallet_type || wallet_name.trim() === "" || wallet_type.trim() === "") {
+  if (!wallet_name || !wallet_type || wallet_name.trim() === "" || wallet_type.trim() === "") {
     throw new Error("Wallet name and type are required");
   }
 
@@ -12,17 +14,29 @@ exports.createWallet = async (user_id, data) => {
     throw new Error("Invalid wallet type");
   }
 
-  await db.query(
+  const [result] = await db.query(
     `INSERT INTO Wallets(user_id, wallet_name, wallet_type, balance, status)
      VALUES (?,?,?,?,?)`,
     [user_id, wallet_name.trim(), wallet_type.trim(), 0, "ACTIVE"]
   );
 
-  return { message: "Wallet created successfully" };
+  const wallet = new Wallet({
+    wallet_id: result.insertId,
+    user_id,
+    wallet_name: wallet_name.trim(),
+    wallet_type: wallet_type.trim(),
+    balance: 0,
+    status: "ACTIVE",
+    created_at: new Date()
+  });
+
+  return {
+    message: "Wallet created successfully",
+    data: wallet.toJSON()
+  };
 };
 
-
-// ✅ UPDATE WALLET (NEW 🔥)
+// ✅ UPDATE WALLET
 exports.updateWallet = async (user_id, wallet_id, data) => {
   if (!data || typeof data !== "object") {
     throw new Error("Invalid input data");
@@ -30,7 +44,6 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
 
   const { wallet_name, wallet_type } = data;
 
-  // ✅ không có gì update
   if (!wallet_name && !wallet_type) {
     throw new Error("No fields to update");
   }
@@ -38,7 +51,6 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
   let updates = [];
   let params = [];
 
-  // ✅ update name
   if (wallet_name) {
     if (wallet_name.trim() === "") {
       throw new Error("wallet_name cannot be empty");
@@ -47,7 +59,6 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
     params.push(wallet_name.trim());
   }
 
-  // ✅ update type (có điều kiện)
   if (wallet_type) {
     const validTypes = ["Cash", "Bank", "E-Wallet", "Credit Card", "Crypto Currency", "Other"];
     const type = wallet_type.trim();
@@ -55,7 +66,6 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
       throw new Error("Invalid wallet type");
     }
 
-    // ❗ check transaction trước khi cho đổi type
     const [transactions] = await db.query(
       "SELECT 1 FROM Transactions WHERE wallet_id=? LIMIT 1",
       [wallet_id]
@@ -69,13 +79,12 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
     params.push(type);
   }
 
-  // ✅ build query dynamic
   if (updates.length === 0) {
     throw new Error("No valid fields to update");
   }
 
   const query = `
-    UPDATE Wallets 
+    UPDATE Wallets
     SET ${updates.join(", ")}
     WHERE wallet_id=? AND user_id=?
   `;
@@ -88,14 +97,21 @@ exports.updateWallet = async (user_id, wallet_id, data) => {
     throw new Error("Wallet not found");
   }
 
-  return { message: "Wallet updated successfully" };
+  const [updatedRows] = await db.query(
+    "SELECT * FROM Wallets WHERE wallet_id=? AND user_id=?",
+    [wallet_id, user_id]
+  );
+
+  const wallet = updatedRows.length > 0 ? new Wallet(updatedRows[0]) : null;
+
+  return {
+    message: "Wallet updated successfully",
+    data: wallet ? wallet.toJSON() : null
+  };
 };
 
-
-
-// ✅ CLOSE WALLET (version xịn)
+// ✅ CLOSE WALLET
 exports.closeWallet = async (user_id, id) => {
-  // 1. lấy wallet
   const [rows] = await db.query(
     "SELECT balance, status FROM Wallets WHERE wallet_id=? AND user_id=?",
     [id, user_id]
@@ -107,38 +123,39 @@ exports.closeWallet = async (user_id, id) => {
 
   const wallet = rows[0];
 
-  // 2. check trạng thái
   if (wallet.status === "CLOSED") {
     throw new Error("Wallet already closed");
   }
 
   const balance = Number(wallet.balance || 0);
 
-  // 3. chặn nếu còn tiền dương
   if (balance > 0) {
     throw new Error("Cannot close wallet with remaining balance");
   }
 
-  // 4. check nếu đang âm → cảnh báo
   let warning = null;
   if (balance < 0) {
     warning = "Wallet has negative balance (debt)";
   }
 
-  // 5. update DB
   await db.query(
     "UPDATE Wallets SET status='CLOSED', closed_at=NOW() WHERE wallet_id=? AND user_id=?",
     [id, user_id]
   );
 
-  // 6. return kết quả (có warning nếu có)
+  const [updatedRows] = await db.query(
+    "SELECT * FROM Wallets WHERE wallet_id=? AND user_id=?",
+    [id, user_id]
+  );
+
+  const updatedWallet = updatedRows.length > 0 ? new Wallet(updatedRows[0]) : null;
+
   return {
     message: "Wallet closed successfully",
-    warning: warning
+    warning,
+    data: updatedWallet ? updatedWallet.toJSON() : null
   };
 };
-
-
 
 // ✅ OPEN WALLET
 exports.openWallet = async (user_id, id) => {
@@ -160,5 +177,15 @@ exports.openWallet = async (user_id, id) => {
     [id, user_id]
   );
 
-  return { message: "Wallet reopened successfully" };
+  const [updatedRows] = await db.query(
+    "SELECT * FROM Wallets WHERE wallet_id=? AND user_id=?",
+    [id, user_id]
+  );
+
+  const updatedWallet = updatedRows.length > 0 ? new Wallet(updatedRows[0]) : null;
+
+  return {
+    message: "Wallet reopened successfully",
+    data: updatedWallet ? updatedWallet.toJSON() : null
+  };
 };

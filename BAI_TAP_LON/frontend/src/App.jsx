@@ -1,7 +1,8 @@
-import React from "react";
-import {BrowserRouter as Router, Routes, Route, useLocation} from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
+import Header from "./components/Header";
 
 // Pages
 import Login from "./pages/Login";
@@ -17,80 +18,41 @@ import Admin from "./pages/Admin";
 
 function AppRoutes() {
   const location = useLocation();
+  const authPages = ["/", "/login", "/register"];
+  const hideNavbar = authPages.includes(location.pathname);
 
-  const authPages = [
-    "/",
-    "/login",
-    "/register",
-  ];
-
-  const hideNavbar = authPages.includes(
-    location.pathname
-  );
+  const [searchText, setSearchText] = useState("");
 
   return (
-    <>
-      {!hideNavbar && <Navbar />}
+    <div style={{ display: "flex" }}>
+      {!hideNavbar && <Navbar searchText={searchText} />}
 
-      <Routes>
-        {/* Auth */}
-        <Route
-          path="/"
-          element={<Register />}
-        />
+      <div
+        style={{
+          flex: 1,
+          minHeight: "100vh",
+          background: "#f8fafc"
+        }}
+      >
+        {!hideNavbar && <Header onSearch={setSearchText} />}
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-        {/* Main Pages */}
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
-
-        <Route
-          path="/wallets"
-          element={<Wallets />}
-        />
-
-        <Route
-          path="/transactions"
-          element={<Transactions />}
-        />
-
-        <Route
-          path="/transfers"
-          element={<Transfers />}
-        />
-
-        <Route
-          path="/goals"
-          element={<Goals />}
-        />
-
-        <Route
-          path="/budgets"
-          element={<Budgets />}
-        />
-
-        <Route
-          path="/categories"
-          element={<Categories />}
-        />
-        {/* Admin Page */}
-        <Route
-          path="/admin"
-          element={<Admin />}
-        />
-      </Routes>
-    </>
+        <div style={{ padding: "24px" }}>
+          <Routes>
+            <Route path="/" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/wallets" element={<Wallets />} />
+            <Route path="/transactions" element={<Transactions />} />
+            <Route path="/transfers" element={<Transfers />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/budgets" element={<Budgets />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/admin" element={<Admin />} />
+          </Routes>
+        </div>
+      </div>
+    </div>
   );
 }
 

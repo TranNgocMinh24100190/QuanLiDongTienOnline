@@ -1,12 +1,14 @@
 const db = require("../config/db");
 const service = require("../services/transactionService");
+const Transaction = require("../models/Transaction");
+
+const mapRowsToTransaction = (rows) => rows.map((row) => new Transaction(row));
 
 // ✅ GET ALL TRANSACTIONS(Flexible with filters, sorting, and pagination)
 exports.getTransactions = async (req, res) => {
   try {
     const user_id = req.user.user_id;
 
-    // ✅ query params
     const {
       type,
       wallet_id,
@@ -26,10 +28,6 @@ exports.getTransactions = async (req, res) => {
     `;
 
     let params = [user_id];
-
-    // =====================
-    // ✅ FILTER
-    // =====================
 
     if (type) {
       query += " AND T.transaction_type = ?";
@@ -56,18 +54,12 @@ exports.getTransactions = async (req, res) => {
       params.push(`%${search}%`);
     }
 
-    // =====================
-    // ✅ SORT
-    // =====================
     if (sort === "asc") {
-      query += " ORDER BY T.transaction_date ASC,T.transaction_id ASC";
+      query += " ORDER BY T.transaction_date ASC, T.transaction_id ASC";
     } else {
-      query += " ORDER BY T.transaction_date DESC,T.transaction_id DESC";
+      query += " ORDER BY T.transaction_date DESC, T.transaction_id DESC";
     }
 
-    // =====================
-    // ✅ PAGINATION
-    // =====================
     const pageNum = Number(page);
     const limitNum = Number(limit);
     const offset = (pageNum - 1) * limitNum;
@@ -75,18 +67,15 @@ exports.getTransactions = async (req, res) => {
     query += " LIMIT ? OFFSET ?";
     params.push(limitNum, offset);
 
-    // =====================
-    // ✅ EXECUTE
-    // =====================
     const [rows] = await db.query(query, params);
+    const transactions = mapRowsToTransaction(rows);
 
     res.json({
       page: pageNum,
       limit: limitNum,
-      count: rows.length,
-      data: rows
+      count: transactions.length,
+      data: transactions.map((t) => t.toJSON())
     });
-
   } catch (err) {
     res.status(500).json({
       message: "Failed to get transactions"
@@ -102,15 +91,12 @@ exports.createTransaction = async (req, res) => {
     if (!wallet_id || !category_id || !transaction_type) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    
+
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: "Invalid amount" });
     }
 
-    const result = await service.createTransaction(
-      req.user.user_id,
-      req.body
-    );
+    const result = await service.createTransaction(req.user.user_id, req.body);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -122,14 +108,11 @@ exports.reverseTransaction = async (req, res) => {
   try {
     const id = req.params.id;
 
-    if(!id || isNaN(id)) {
+    if (!id || isNaN(id)) {
       return res.status(400).json({ message: "Invalid transaction ID" });
     }
 
-    const result = await service.reverseTransaction(
-      req.user.user_id,
-      req.params.id
-    );
+    const result = await service.reverseTransaction(req.user.user_id, req.params.id);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });

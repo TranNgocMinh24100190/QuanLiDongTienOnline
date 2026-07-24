@@ -7,6 +7,6 @@ const validate = require("../middleware/validate");
 router.post("/", auth, [
     body("amount").isFloat({ min: 1 }).withMessage("Số tiền phải là số dương")
 ], validate, ctrl.createTransfer);
-router.post("/:id/reverse", auth, ctrl.reverseTransfer);
+router.post("/reverse/:id", auth, ctrl.reverseTransfer);
 
 module.exports = router;

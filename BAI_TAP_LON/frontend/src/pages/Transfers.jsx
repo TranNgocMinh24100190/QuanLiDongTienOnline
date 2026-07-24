@@ -86,10 +86,10 @@ function Transfers() {
             <select className="form-select"
               value={form.from_wallet_id}
               onChange={(e) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   from_wallet_id: e.target.value
-                })
+                }))
               }
             >
               <option value="">
@@ -109,10 +109,10 @@ function Transfers() {
             <select className="form-select"
               value={form.to_wallet_id}
               onChange={(e) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   to_wallet_id: e.target.value
-                })
+                }))
               }
             >
               <option value="">
@@ -134,10 +134,10 @@ function Transfers() {
               placeholder="Số tiền"
               value={form.amount}
               onChange={(e) =>
-                setForm({
-                  ...form,
+                setForm((prev) => ({
+                  ...prev,
                   amount: e.target.value
-                })
+                }))
               }
             />
 
