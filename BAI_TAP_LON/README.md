@@ -156,3 +156,6 @@ npm test
 - Chạy backend trước, sau đó frontend.
 - Nếu frontend không kết nối được API, kiểm tra `REACT_APP_API_URL` hoặc endpoint trong code.
 - Đảm bảo server MariaDB đang hoạt động trước khi chạy backend.
+- Tài khoản Admin dùng để đăng nhập và kiểm thử hệ thống:  
+  - Email: `admin@gmail.com`  
+  - Mật khẩu: `admin123`
