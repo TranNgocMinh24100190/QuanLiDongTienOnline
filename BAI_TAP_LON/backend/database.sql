@@ -106,7 +106,8 @@ CREATE TABLE Transfers (
 -- USERS
 INSERT INTO Users(full_name,email,password_hash,phone)
 VALUES
-('Nguyen Van A','a@gmail.com','123456','0901111111');
+('Nguyen Van A','a@gmail.com','$2b$10$8Xt60oPdEd0ini9af4TZDulmceGlhAVBmIJp21ooPGog2C8soSMx.','0901111111'), --MK: 123456
+('ADMIN','admin@gmail.com','$2b$10$T4hAAwKTaGVCV0NILmfMFeoX.jbCENvbpF6OV4ZVCf8X5TWg.sNJq'); --MK: admin123
 
 -- WALLETS
 INSERT INTO Wallets(user_id,wallet_name,wallet_type,balance)
