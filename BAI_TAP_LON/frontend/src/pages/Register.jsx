@@ -25,7 +25,7 @@ function Register() {
         navigate("/login");
       }, 2000);
     } catch (err) {
-      setMessage("Có lỗi xảy ra khi đăng ký.");
+      setMessage(err.response?.data?.errors?.[0]?.msg || "Có lỗi xảy ra khi đăng ký.");
     }
   };
 

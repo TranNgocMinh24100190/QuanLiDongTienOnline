@@ -64,7 +64,7 @@ function Budgets() {
 
       } catch (err) {
 
-        alert(err?.response?.data?.message || "Không thể tạo ngân sách");
+        alert(err?.response?.data?.errors?.[0]?.msg || "Không thể tạo ngân sách");
       }
   };
 
@@ -79,7 +79,7 @@ function Budgets() {
       loadData();
     } catch (err) {
       alert(
-        err?.response?.data?.message || "Không thể cập nhật ngân sách"
+        err?.response?.data?.errors?.[0]?.msg || "Không thể cập nhật ngân sách"
       );
     }
   };

@@ -71,7 +71,7 @@ function Transactions() {
     } catch (err) {
       console.log("FULL ERROR:", err);
       alert(
-        err?.response?.data?.message ||
+        err.response?.data?.errors?.[0]?.msg ||
           "Không thể tạo giao dịch"
       );
     }

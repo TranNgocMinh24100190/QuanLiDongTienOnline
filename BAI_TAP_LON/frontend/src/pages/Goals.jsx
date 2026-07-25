@@ -49,7 +49,7 @@ function Goals() {
 
     } catch (err) {
       alert(
-        err?.response?.data?.message
+        err?.response?.data?.errors?.[0]?.msg
       );
     }
   };

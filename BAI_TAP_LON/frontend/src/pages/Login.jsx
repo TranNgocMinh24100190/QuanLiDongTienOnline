@@ -23,7 +23,7 @@ function Login() {
         window.location.href = "/dashboard";
       }, 2000);
     } catch (err) {
-      setMessage("Sai tài khoản hoặc mật khẩu.");
+      setMessage(err.response?.data?.errors?.[0]?.msg || "Sai tài khoản hoặc mật khẩu.");
     }
   };
 

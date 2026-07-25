@@ -44,7 +44,7 @@ function Categories() {
 
     } catch (err) {
       alert(
-        err?.response?.data?.message
+        err?.response?.data?.errors?.[0]?.msg
       );
     }
   };
@@ -59,7 +59,7 @@ function Categories() {
       loadCategories();
     } catch (err) {
       alert(
-        err?.response?.data?.message || "Không thể cập nhật danh mục"
+        err?.response?.data?.errors?.[0]?.msg || "Không thể cập nhật danh mục"
       );
     }
   };
