@@ -133,9 +133,8 @@ exports.closeWallet = async (user_id, id) => {
     throw new Error("Cannot close wallet with remaining balance");
   }
 
-  let warning = null;
   if (balance < 0) {
-    warning = "Wallet has negative balance (debt)";
+    throw new Error("Cannot close wallet with debt");
   }
 
   await db.query(
@@ -152,7 +151,6 @@ exports.closeWallet = async (user_id, id) => {
 
   return {
     message: "Wallet closed successfully",
-    warning,
     data: updatedWallet ? updatedWallet.toJSON() : null
   };
 };

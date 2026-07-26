@@ -201,6 +201,14 @@ exports.reverseTransaction = async (user_id, transaction_id) => {
   if (t.description && t.description.startsWith("[REVERSED]")) {
     throw new Error("Cannot reverse a reversed transaction");
   }
+  
+  const [walletRows] = await db.query(
+    "SELECT status FROM Wallets WHERE wallet_id=?",
+    [t.wallet_id]
+  );
+  if (walletRows[0].status === "CLOSED") {
+    throw new Error("Wallet is closed");
+  }
 
   const reversedType = t.transaction_type === "Income" ? "Expense" : "Income";
 

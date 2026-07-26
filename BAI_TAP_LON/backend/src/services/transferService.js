@@ -17,7 +17,7 @@ exports.createTransfer = async (user_id, data) => {
   }
 
   const [wallets] = await db.query(
-    "SELECT wallet_id, wallet_name FROM Wallets WHERE wallet_id IN (?, ?) AND user_id=?",
+    "SELECT wallet_id, wallet_name, status FROM Wallets WHERE wallet_id IN (?, ?) AND user_id=?",
     [from_wallet_id, to_wallet_id, user_id]
   );
 
@@ -27,6 +27,10 @@ exports.createTransfer = async (user_id, data) => {
 
   const fromWallet = wallets.find((w) => w.wallet_id == from_wallet_id);
   const toWallet = wallets.find((w) => w.wallet_id == to_wallet_id);
+
+  if (fromWallet.status === "CLOSED" || toWallet.status === "CLOSED") {
+    throw new Error("Cannot transfer using a closed wallet");
+  }
 
   const fromWalletName = fromWallet?.wallet_name || "Unknown";
   const toWalletName = toWallet?.wallet_name || "Unknown";
@@ -175,6 +179,19 @@ exports.reverseTransfer = async (user_id, transaction_id) => {
 
   if (!groupTx || groupTx.length < 2) {
     throw new Error("Invalid transfer group");
+  }
+
+  for (const tx of groupTx) {
+    const [walletRows] = await db.query(
+      "SELECT status FROM Wallets WHERE wallet_id=?",
+      [tx.wallet_id]
+    );
+
+    if (walletRows[0].status === "CLOSED") {
+      throw new Error(
+        "Cannot reverse transfer because wallet is closed"
+      );
+    }
   }
 
   const conn = await db.getConnection();
