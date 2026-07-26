@@ -10,4 +10,4 @@ export const createTransaction = (data) =>
 
 // Reverse giao dịch
 export const reverseTransaction = (id) =>
-  API.post(`/transactions/${id}/reverse`);
+  API.post(`/transactions/reverse/${id}`);

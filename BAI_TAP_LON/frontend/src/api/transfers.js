@@ -6,4 +6,4 @@ export const createTransfer = (data) =>
 
 // Reverse transfer
 export const reverseTransfer = (id) =>
-  API.post(`/transfers/${id}/reverse`);
+  API.post(`/transfers/reverse/${id}`);
